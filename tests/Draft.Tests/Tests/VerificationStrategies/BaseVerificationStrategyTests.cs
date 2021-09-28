@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net.Http;
-
+using System.Threading.Tasks;
 using Draft.Endpoints;
 
 using Flurl.Http;
@@ -22,7 +22,7 @@ namespace Draft.Tests.VerificationStrategies
 
         protected static readonly Uri Uri5 = new Uri("http://localhost:5");
 
-        protected Action BuildAndVerifyAction
+        protected Func<Task> BuildAndVerifyAction
         {
             get
             {
@@ -51,8 +51,8 @@ namespace Draft.Tests.VerificationStrategies
 
         protected HttpTest InitializeInvalidHostHelper(Func<HttpTest, HttpRequestMessage, HttpResponseMessage> responseFactory = null)
         {
-            var httpTest = new HttpTest();
-            FlurlHttp.Configure(x => { x.HttpClientFactory = new TestingHttpClientFactory(responseFactory); });
+            HttpTest httpTest = new HttpTest();
+            httpTest.Configure(x => { x.HttpClientFactory = new TestingHttpClientFactory(responseFactory); });
             return httpTest;
         }
 

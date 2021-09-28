@@ -14,7 +14,7 @@ namespace Draft.Tests.Assertions
     public class HttpCallFluentAssertions : BaseFluentAssertions
     {
 
-        public HttpCallFluentAssertions(IList<HttpCall> calls) : base(calls) {}
+        public HttpCallFluentAssertions(IReadOnlyCollection<FlurlCall> calls) : base(calls) {}
 
         public void Times(int expectedCount, string because = "", params object[] reasonArgs)
         {
@@ -26,7 +26,7 @@ namespace Draft.Tests.Assertions
 
         public HttpCallFluentAssertions WithContentType(string contentType, string because = "", params object[] reasonArgs)
         {
-            var matchingCalls = FilterCalls(x => x.Request.Content.Headers.ContentType.MediaType.Equals(contentType, StringComparison.InvariantCultureIgnoreCase));
+            var matchingCalls = FilterCalls(x => x.HttpRequestMessage.Content.Headers.ContentType.MediaType.Equals(contentType, StringComparison.InvariantCultureIgnoreCase));
             Execute.Assertion
                 .ForCondition(matchingCalls.Any())
                 .BecauseOf(because, reasonArgs)
@@ -48,7 +48,7 @@ namespace Draft.Tests.Assertions
 
         public HttpCallFluentAssertions WithVerb(HttpMethod httpMethod, string because = "", params object[] reasonArgs)
         {
-            var matchingCalls = FilterCalls(x => x.Request.Method == httpMethod);
+            var matchingCalls = FilterCalls(x => x.HttpRequestMessage.Method == httpMethod);
             Execute.Assertion
                 .ForCondition(matchingCalls.Any())
                 .BecauseOf(because, reasonArgs)

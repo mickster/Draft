@@ -43,11 +43,11 @@ namespace Draft
                 {
                     c.BeforeCall = http =>
                     {
-                        if (http.Request.IsJsonContentType())
+                        if (http.HttpRequestMessage.IsJsonContentType())
                         {
                             // This needs to be explicitly set because etcd complains if the
                             // content-type has a charset value appended
-                            http.Request.Content.Headers.ContentType = new MediaTypeWithQualityHeaderValue(Constants.Http.ContentType_ApplicationJson);
+                            http.HttpRequestMessage.Content.Headers.ContentType = new MediaTypeWithQualityHeaderValue(Constants.Http.ContentType_ApplicationJson);
                         }
                     };
                 });

@@ -10,6 +10,7 @@ using Draft.Exceptions;
 using Draft.Responses;
 
 using Flurl.Http;
+using Flurl.Http.Configuration;
 using Flurl.Http.Testing;
 
 using Xunit;
@@ -20,65 +21,64 @@ namespace Draft.Tests.Exceptions
     {
         private static readonly Func<Task<IEtcdVersion>> CallFixture = async () => await Etcd.ClientFor(Fixtures.EtcdUrl.ToUri()).GetVersion();
 
-        private static HttpTest NewErrorCodeFixture(int? etcdErrorCode = null, HttpStatusCode status = HttpStatusCode.BadRequest)
+        private static HttpTestSetup NewErrorCodeFixture(int? etcdErrorCode = null, HttpStatusCode status = HttpStatusCode.BadRequest)
         {
+            
             return new HttpTest()
                 .RespondWithJson(status, Fixtures.CreateErrorMessage(etcdErrorCode));
         }
 
         [Fact]
-        public void ShouldParseErrorCodeFromHttpStatusIfMissingFromBody()
+        public async Task ShouldParseErrorCodeFromHttpStatusIfMissingFromBody()
         {
-            using (NewErrorCodeFixture(status : HttpStatusCode.Conflict))
+            using ((IDisposable)NewErrorCodeFixture(status : HttpStatusCode.Conflict))
             {
-                CallFixture.ShouldThrow<ExistingPeerAddressException>();
+                await CallFixture.Should().ThrowAsync<ExistingPeerAddressException>();
             }
         }
 
         [Fact]
-        public void ShouldParseErrorCodeFromMessageBody()
+        public async Task ShouldParseErrorCodeFromMessageBody()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_Unknown))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_Unknown))
             {
-                CallFixture.ShouldThrow<UnknownErrorException>();
+                await CallFixture.Should().ThrowAsync<UnknownErrorException>();
             }
         }
 
         [Fact]
-        public void ShouldThrowEtcdTimeoutException()
+        public async Task ShouldThrowEtcdTimeoutException()
         {
             using (var http = new HttpTest())
             {
                 http.SimulateTimeout();
 
-                CallFixture.ShouldThrow<EtcdTimeoutException>()
+                (await CallFixture.Should().ThrowAsync<EtcdTimeoutException>())
                     .And
                     .IsTimeout.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowInvalidHostException()
+        public async Task ShouldThrowInvalidHostException()
         {
-            using (new HttpTest())
+            using (HttpTest test = new HttpTest())
             {
-                FlurlHttp.Configure(
-                    x => { x.HttpClientFactory = new TestingHttpClientFactory(); });
-
-                CallFixture.ShouldThrow<InvalidHostException>()
+                test.Configure(x=>{ x.HttpClientFactory = new TestingHttpClientFactory(); });
+                (await CallFixture.Should().ThrowAsync<InvalidHostException>())
                     .And
                     .IsInvalidHost.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowInvalidRequestException()
+        public async Task ShouldThrowInvalidRequestException()
         {
             using (var http = new HttpTest())
             {
                 http.RespondWith(HttpStatusCode.NotFound, HttpStatusCode.NotFound.ToString());
 
-                CallFixture.ShouldThrow<InvalidRequestException>()
+                (await CallFixture.Should().ThrowAsync<InvalidRequestException>())
                     .And
                     .IsInvalidRequest.Should().BeTrue();
             }
@@ -87,344 +87,341 @@ namespace Draft.Tests.Exceptions
         #region Exception Type Tests
 
         [Fact]
-        public void ShouldThrowClientInternalException()
+        public async Task ShouldThrowClientInternalException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_ClientInternal))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_ClientInternal))
             {
-                CallFixture.ShouldThrow<ClientInternalException>()
+	            (await CallFixture.Should().ThrowAsync<ClientInternalException>())
                     .And
                     .IsClientInternal.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowDirectoryNotEmptyException()
+        public async Task ShouldThrowDirectoryNotEmptyException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_DirectoryNotEmpty))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_DirectoryNotEmpty))
             {
-                CallFixture.ShouldThrow<DirectoryNotEmptyException>()
+	            (await CallFixture.Should().ThrowAsync<DirectoryNotEmptyException>())
                     .And
                     .IsDirectoryNotEmpty.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowEventIndexClearedException()
+        public async Task ShouldThrowEventIndexClearedException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_EventIndexCleared))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_EventIndexCleared))
             {
-                CallFixture.ShouldThrow<EventIndexClearedException>()
+	            (await CallFixture.Should().ThrowAsync<EventIndexClearedException>())
                     .And
                     .IsEventIndexCleared.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowExistingPeerAddressException()
+        public async Task ShouldThrowExistingPeerAddressException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_ExistingPeerAddress))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_ExistingPeerAddress))
             {
-                CallFixture.ShouldThrow<ExistingPeerAddressException>()
+	            (await CallFixture.Should().ThrowAsync<ExistingPeerAddressException>())
                     .And
                     .IsExistingPeerAddress.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowHttpConnectionException()
-        {
-            using (new HttpTest())
-            {
-                FlurlHttp.Configure(
-                    x => { x.HttpClientFactory = new TestingHttpClientFactory( /*new HttpTest(), */(ht, hrm) => { throw new WebException("The Message", WebExceptionStatus.ConnectFailure); }); });
+        public async Task ShouldThrowHttpConnectionException() {
 
-                CallFixture.ShouldThrow<HttpConnectionException>()
+            using (HttpTest test = new HttpTest()) {
+	            test.Configure(x => { x.HttpClientFactory = new TestingHttpClientFactory( /*new HttpTest(), */(ht, hrm) => { throw new WebException("The Message", WebExceptionStatus.ConnectFailure); }); });
+                (await CallFixture.Should().ThrowAsync<HttpConnectionException>())
                     .And
                     .IsHttpConnection.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowIndexNotANumberException()
+        public async Task ShouldThrowIndexNotANumberException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_IndexNotANumber))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_IndexNotANumber))
             {
-                CallFixture.ShouldThrow<IndexNotANumberException>()
+	            (await CallFixture.Should().ThrowAsync<IndexNotANumberException>())
                     .And
                     .IsIndexNotANumber.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowIndexOrValueRequiredException()
+        public async Task ShouldThrowIndexOrValueRequiredException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_IndexOrValueRequired))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_IndexOrValueRequired))
             {
-                CallFixture.ShouldThrow<IndexOrValueRequiredException>()
+	            (await CallFixture.Should().ThrowAsync<IndexOrValueRequiredException>())
                     .And
                     .IsIndexOrValueRequired.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowIndexValueMutexException()
+        public async Task ShouldThrowIndexValueMutexException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_IndexValueMutex))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_IndexValueMutex))
             {
-                CallFixture.ShouldThrow<IndexValueMutexException>()
+	            (await CallFixture.Should().ThrowAsync<IndexValueMutexException>())
                     .And
                     .IsIndexValueMutex.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowInvalidActiveSizeException()
+        public async Task ShouldThrowInvalidActiveSizeException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_InvalidActiveSize))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_InvalidActiveSize))
             {
-                CallFixture.ShouldThrow<InvalidActiveSizeException>()
+	            (await CallFixture.Should().ThrowAsync<InvalidActiveSizeException>())
                     .And
                     .IsInvalidActiveSize.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowInvalidFieldException()
+        public async Task ShouldThrowInvalidFieldException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_InvalidField))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_InvalidField))
             {
-                CallFixture.ShouldThrow<InvalidFieldException>()
+	            (await CallFixture.Should().ThrowAsync<InvalidFieldException>())
                     .And
                     .IsInvalidField.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowInvalidFormException()
+        public async Task ShouldThrowInvalidFormException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_InvalidForm))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_InvalidForm))
             {
-                CallFixture.ShouldThrow<InvalidFormException>()
+	            (await CallFixture.Should().ThrowAsync<InvalidFormException>())
                     .And
                     .IsInvalidForm.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowInvalidRemoveDelayException()
+        public async Task ShouldThrowInvalidRemoveDelayException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_InvalidRemoveDelay))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_InvalidRemoveDelay))
             {
-                CallFixture.ShouldThrow<InvalidRemoveDelayException>()
+	            (await CallFixture.Should().ThrowAsync<InvalidRemoveDelayException>())
                     .And
                     .IsInvalidRemoveDelay.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowKeyIsPreservedException()
+        public async Task ShouldThrowKeyIsPreservedException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_KeyIsPreserved))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_KeyIsPreserved))
             {
-                CallFixture.ShouldThrow<KeyIsPreservedException>()
+	            (await CallFixture.Should().ThrowAsync<KeyIsPreservedException>())
                     .And
                     .IsKeyIsPreserved.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowKeyNotFoundException()
+        public async Task ShouldThrowKeyNotFoundException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_KeyNotFound))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_KeyNotFound))
             {
-                CallFixture.ShouldThrow<KeyNotFoundException>()
+	            (await CallFixture.Should().ThrowAsync<KeyNotFoundException>())
                     .And
                     .IsKeyNotFound.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowLeaderElectException()
+        public async Task ShouldThrowLeaderElectException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_LeaderElect))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_LeaderElect))
             {
-                CallFixture.ShouldThrow<LeaderElectException>()
+	            (await CallFixture.Should().ThrowAsync<LeaderElectException>())
                     .And
                     .IsLeaderElect.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowNameRequiredException()
+        public async Task ShouldThrowNameRequiredException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_NameRequired))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_NameRequired))
             {
-                CallFixture.ShouldThrow<NameRequiredException>()
+	            (await CallFixture.Should().ThrowAsync<NameRequiredException>())
                     .And
                     .IsNameRequired.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowNodeExistsException()
+        public async Task ShouldThrowNodeExistsException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_NodeExists))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_NodeExists))
             {
-                CallFixture.ShouldThrow<NodeExistsException>()
+	            (await CallFixture.Should().ThrowAsync<NodeExistsException>())
                     .And
                     .IsNodeExists.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowNoMorePeerException()
+        public async Task ShouldThrowNoMorePeerException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_NoMorePeer))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_NoMorePeer))
             {
-                CallFixture.ShouldThrow<NoMorePeerException>()
+	            (await CallFixture.Should().ThrowAsync<NoMorePeerException>())
                     .And
                     .IsNoMorePeer.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowNotADirectoryException()
+        public async Task ShouldThrowNotADirectoryException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_NotDirectory))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_NotDirectory))
             {
-                CallFixture.ShouldThrow<NotADirectoryException>()
+	            (await CallFixture.Should().ThrowAsync<NotADirectoryException>())
                     .And
                     .IsNotDirectory.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowNotAFileException()
+        public async Task ShouldThrowNotAFileException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_NotFile))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_NotFile))
             {
-                CallFixture.ShouldThrow<NotAFileException>()
+	            (await CallFixture.Should().ThrowAsync<NotAFileException>())
                     .And
                     .IsNotFile.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowPreviousValueRequiredException()
+        public async Task ShouldThrowPreviousValueRequiredException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_PreviousValueRequired))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_PreviousValueRequired))
             {
-                CallFixture.ShouldThrow<PreviousValueRequiredException>()
+	            (await CallFixture.Should().ThrowAsync<PreviousValueRequiredException>())
                     .And
                     .IsPreviousValueRequired.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowRaftInternalException()
+        public async Task ShouldThrowRaftInternalException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_RaftInternal))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_RaftInternal))
             {
-                CallFixture.ShouldThrow<RaftInternalException>()
+	            (await CallFixture.Should().ThrowAsync<RaftInternalException>())
                     .And
                     .IsRaftInternal.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowRootIsReadOnlyException()
+        public async Task ShouldThrowRootIsReadOnlyException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_RootReadOnly))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_RootReadOnly))
             {
-                CallFixture.ShouldThrow<RootIsReadOnlyException>()
+	            (await CallFixture.Should().ThrowAsync<RootIsReadOnlyException>())
                     .And
                     .IsRootReadOnly.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowStandbyInternalException()
+        public async Task ShouldThrowStandbyInternalException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_StandbyInternal))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_StandbyInternal))
             {
-                CallFixture.ShouldThrow<StandbyInternalException>()
+	            (await CallFixture.Should().ThrowAsync<StandbyInternalException>())
                     .And
                     .IsStandbyInternal.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowTestFailedException()
+        public async Task ShouldThrowTestFailedException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_TestFailed))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_TestFailed))
             {
-                CallFixture.ShouldThrow<TestFailedException>()
+	            (await CallFixture.Should().ThrowAsync<TestFailedException>())
                     .And
                     .IsTestFailed.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowTimeoutNotANumberException()
+        public async Task ShouldThrowTimeoutNotANumberException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_TimeoutNotANumber))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_TimeoutNotANumber))
             {
-                CallFixture.ShouldThrow<TimeoutNotANumberException>()
+	            (await CallFixture.Should().ThrowAsync<TimeoutNotANumberException>())
                     .And
                     .IsTimeoutNotANumber.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowTtlNotANumberException()
+        public async Task ShouldThrowTtlNotANumberException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_TtlNotANumber))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_TtlNotANumber))
             {
-                CallFixture.ShouldThrow<TtlNotANumberException>()
+	            (await CallFixture.Should().ThrowAsync<TtlNotANumberException>())
                     .And
                     .IsTtlNotANumber.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowUnknownErrorException()
+        public async Task ShouldThrowUnknownErrorException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_Unknown))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_Unknown))
             {
-                CallFixture.ShouldThrow<UnknownErrorException>()
+	            (await CallFixture.Should().ThrowAsync<UnknownErrorException>())
                     .And
                     .IsUnknown.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowValueOrTtlRequiredException()
+        public async Task ShouldThrowValueOrTtlRequiredException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_ValueOrTtlRequired))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_ValueOrTtlRequired))
             {
-                CallFixture.ShouldThrow<ValueOrTtlRequiredException>()
+	            (await CallFixture.Should().ThrowAsync<ValueOrTtlRequiredException>())
                     .And
                     .IsValueOrTtlRequired.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowValueRequiredException()
+        public async Task ShouldThrowValueRequiredException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_ValueRequired))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_ValueRequired))
             {
-                CallFixture.ShouldThrow<ValueRequiredException>()
+	            (await CallFixture.Should().ThrowAsync<ValueRequiredException>())
                     .And
                     .IsValueRequired.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowWatcherClearedException()
+        public async Task ShouldThrowWatcherClearedException()
         {
-            using (NewErrorCodeFixture(Constants.Etcd.ErrorCode_WatcherCleared))
+            using ((IDisposable)NewErrorCodeFixture(Constants.Etcd.ErrorCode_WatcherCleared))
             {
-                CallFixture.ShouldThrow<WatcherClearedException>()
+	            (await CallFixture.Should().ThrowAsync<WatcherClearedException>())
                     .And
                     .IsWatcherCleared.Should().BeTrue();
             }

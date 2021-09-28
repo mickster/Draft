@@ -49,7 +49,7 @@ namespace Draft.Tests.VerificationStrategies
                     }
                 };
                 
-                action.ShouldThrow<InvalidHostException>();
+                action.Should().Throw<InvalidHostException>();
             }
         }
 
@@ -61,9 +61,7 @@ namespace Draft.Tests.VerificationStrategies
                 {
                     if (xr.RequestUri.ToString().StartsWith(Uri2.ToString()))
                     {
-                        return xh.ResponseQueue.Any()
-                            ? xh.ResponseQueue.Dequeue()
-                            : new HttpResponseMessage(HttpStatusCode.OK)
+                        return new HttpResponseMessage(HttpStatusCode.OK)
                             {
                                 Content = new StringContent(string.Empty)
                             };

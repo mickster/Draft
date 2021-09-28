@@ -44,7 +44,7 @@ namespace Draft.Tests.Cluster
         }
 
         [Fact]
-        public void ShouldThrowBadRequestExceptionOn400ResponseCode()
+        public async Task ShouldThrowBadRequestExceptionOn400ResponseCode()
         {
             using (var http = new HttpTest())
             {
@@ -58,14 +58,14 @@ namespace Draft.Tests.Cluster
                               .WithMemberId(StaticRandom.Instance.Next().ToString());
                 };
 
-                action.ShouldThrowExactly<BadRequestException>()
+                (await action.Should().ThrowExactlyAsync<BadRequestException>())
                       .And
                       .IsBadRequest.Should().BeTrue();
             }
         }
 
         [Fact]
-        public void ShouldThrowInvalidRequestExceptionOn404ResponseCode()
+        public async Task ShouldThrowInvalidRequestExceptionOn404ResponseCode()
         {
             using (var http = new HttpTest())
             {
@@ -79,7 +79,7 @@ namespace Draft.Tests.Cluster
                               .WithMemberId(StaticRandom.Instance.Next().ToString());
                 };
 
-                action.ShouldThrowExactly<InvalidRequestException>()
+                (await action.Should().ThrowExactlyAsync<InvalidRequestException>())
                       .And
                       .IsInvalidRequest.Should().BeTrue();
             }

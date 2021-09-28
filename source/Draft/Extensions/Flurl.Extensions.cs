@@ -21,12 +21,12 @@ namespace Draft
             return predicate ? action(This) : This;
         }
 
-        public static IFlurlClient Conditionally(this Url This, bool predicate, Func<Url, IFlurlClient> action)
+        public static IFlurlRequest Conditionally(this Url This, bool predicate, Func<Url, IFlurlRequest> action)
         {
-            return predicate ? action(This) : new FlurlClient(This, true);
+            return predicate ? action(This) : new FlurlRequest(This.ToString());
         }
 
-        public static Task<HttpResponseMessage> Conditionally(this Url This, bool predicate, object data, Func<Url, object, Task<HttpResponseMessage>> ifTrue, Func<Url, object, Task<HttpResponseMessage>> ifFalse)
+        public static Task<IFlurlResponse> Conditionally(this Url This, bool predicate, object data, Func<Url, object, Task<IFlurlResponse>> ifTrue, Func<Url, object, Task<IFlurlResponse>> ifFalse)
         {
             return predicate ? ifTrue(This, data) : ifFalse(This, data);
         }

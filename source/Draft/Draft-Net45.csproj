@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Draft</RootNamespace>
     <AssemblyName>Draft</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -34,14 +35,14 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Flurl, Version=2.4.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Flurl.2.4.0\lib\net40\Flurl.dll</HintPath>
+    <Reference Include="Flurl, Version=3.0.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Flurl.3.0.2\lib\net472\Flurl.dll</HintPath>
     </Reference>
-    <Reference Include="Flurl.Http, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Flurl.Http.1.2.0\lib\net45\Flurl.Http.dll</HintPath>
+    <Reference Include="Flurl.Http, Version=3.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Flurl.Http.3.2.0\lib\net472\Flurl.Http.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Newtonsoft.Json.10.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -211,6 +212,7 @@
     <Compile Include="Responses\Version.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.Draft-Net45.config" />
   </ItemGroup>
   <Choose>

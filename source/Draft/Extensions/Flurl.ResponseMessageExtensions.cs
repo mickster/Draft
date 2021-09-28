@@ -8,6 +8,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 
 using Draft.Responses;
+using Newtonsoft.Json;
 
 namespace Draft
 {
@@ -25,17 +26,19 @@ namespace Draft
             };
         }
 
-        public static async Task<T> ReceiveEtcdResponse<T>(this Task<HttpResponseMessage> This, IEtcdClient etcdClient)
+        public static async Task<T> ReceiveEtcdResponse<T>(this Task<IFlurlResponse> This, IEtcdClient etcdClient)
             where T : IHaveResponseHeaders
         {
-            var response = await This.ReceiveJson<T>();
+            var httpMessage = (await This).ResponseMessage;
+            var response = JsonConvert.DeserializeObject<T>(await httpMessage.Content.ReadAsStringAsync());
+            //var response = await This.ReceiveJson<T>();
             var vcResponse = response as IHaveAValueConverter;
             if (vcResponse != null)
             {
                 var vc = etcdClient.Config.ValueConverter;
                 vcResponse.ValueConverter = () => vc;
             }
-            var httpMessage = await This;
+            
             response.Headers = httpMessage.ParseResponseHeaders();
             return response;
         }

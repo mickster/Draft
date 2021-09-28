@@ -13,11 +13,11 @@ namespace Draft.Tests.Assertions
     public class HttpTestFluentAssertions : BaseFluentAssertions
     {
 
-        public HttpTestFluentAssertions(IList<HttpCall> calls) : base(calls) {}
+        public HttpTestFluentAssertions(IReadOnlyCollection<FlurlCall> calls) : base(calls) {}
 
         public HttpCallFluentAssertions HaveCalled(string urlPattern, string because = "", params object[] reasonArgs)
         {
-            var matchingCalls = FilterCalls(x => MatchesPattern(x.Request.RequestUri.AbsoluteUri, urlPattern));
+            var matchingCalls = FilterCalls(x => MatchesPattern(x.HttpRequestMessage.RequestUri.AbsoluteUri, urlPattern));
             Execute.Assertion
                 .ForCondition(matchingCalls.Any())
                 .BecauseOf(because, reasonArgs)
@@ -28,7 +28,7 @@ namespace Draft.Tests.Assertions
 
         public HttpCallFluentAssertions NotHaveCalled(string urlPattern, string because = "", params object[] reasonArgs)
         {
-            var matchingCalls = FilterCalls(x => MatchesPattern(x.Request.RequestUri.AbsoluteUri, urlPattern));
+            var matchingCalls = FilterCalls(x => MatchesPattern(x.HttpRequestMessage.RequestUri.AbsoluteUri, urlPattern));
             Execute.Assertion
                 .ForCondition(!matchingCalls.Any())
                 .BecauseOf(because, reasonArgs)

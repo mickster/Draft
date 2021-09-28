@@ -32,7 +32,7 @@ namespace Draft.Tests.VerificationStrategies
 
 
         [Fact]
-        public void ShouldThrowExceptionWhenSomeEndpointsAreOffline()
+        public async Task ShouldThrowExceptionWhenSomeEndpointsAreOffline()
         {
             using (var http = InitializeInvalidHostHelper(
                 (xh, xr) =>
@@ -42,9 +42,7 @@ namespace Draft.Tests.VerificationStrategies
                         throw new SocketException();
                     }
 
-                    return xh.ResponseQueue.Any()
-                        ? xh.ResponseQueue.Dequeue()
-                        : new HttpResponseMessage(HttpStatusCode.OK)
+                    return new HttpResponseMessage(HttpStatusCode.OK)
                         {
                             Content = new StringContent(string.Empty)
                         };
@@ -56,13 +54,12 @@ namespace Draft.Tests.VerificationStrategies
                 http.RespondWith("etc 1.2.3");
                 http.RespondWith("etc 1.2.3");
 
-                Action action = () =>
+                Func<Task> action = async () =>
                 {
-                    try
-                    {
-                        CreateSut(VerificationStrategy)
-                            .VerifyAndBuild(Uris)
-                            .Wait();
+                    try {
+	                    await CreateSut(VerificationStrategy)
+		                    .VerifyAndBuild(Uris);
+
                     }
                     catch (AggregateException ae)
                     {
@@ -70,7 +67,7 @@ namespace Draft.Tests.VerificationStrategies
                     }
                 };
 
-                action.ShouldThrow<InvalidHostException>();
+                await action.Should().ThrowAsync<InvalidHostException>();
             }
         }
 

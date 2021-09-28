@@ -32,7 +32,7 @@ namespace Draft
                 var response = await endpoint.ToUrl()
                                              .AppendPathSegment(Constants.Etcd.Path_Version)
                                              .GetAsync();
-                if (response != null && response.IsSuccessStatusCode)
+                if (response != null && response.ResponseMessage.IsSuccessStatusCode)
                 {
                     availablility = EndpointAvailability.Online;
                 }

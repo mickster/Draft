@@ -12,14 +12,14 @@ namespace Draft.Tests.Assertions
     public abstract class BaseFluentAssertions
     {
 
-        protected BaseFluentAssertions(IList<HttpCall> calls)
+        protected BaseFluentAssertions(IReadOnlyCollection<FlurlCall> calls)
         {
-            Calls = calls;
+            Calls = new List<FlurlCall>(calls);
         }
 
-        protected IList<HttpCall> Calls { get; private set; }
+        protected IList<FlurlCall> Calls { get; private set; }
 
-        protected List<HttpCall> FilterCalls(Func<HttpCall, bool> filter)
+        protected List<FlurlCall> FilterCalls(Func<FlurlCall, bool> filter)
         {
             return Calls.Where(filter).ToList();
         }
@@ -32,7 +32,7 @@ namespace Draft.Tests.Assertions
 
         protected string FirstRequestAbsoluteUri
         {
-            get { return Calls.Select(x => x.Request.RequestUri.AbsoluteUri).FirstOrDefault(); }
+            get { return Calls.Select(x => x.HttpRequestMessage.RequestUri.AbsoluteUri).FirstOrDefault(); }
         }
 
     }

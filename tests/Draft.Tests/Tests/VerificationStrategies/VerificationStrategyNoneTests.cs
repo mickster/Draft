@@ -27,7 +27,7 @@ namespace Draft.Tests.VerificationStrategies
         }
 
         [Fact]
-        public void ShouldVerifyAndBuildWithoutException()
+        public async Task ShouldVerifyAndBuildWithoutException()
         {
             using (var http = new HttpTest())
             {
@@ -37,7 +37,7 @@ namespace Draft.Tests.VerificationStrategies
                     .RespondWith("etcd 1.2.4")
                     .RespondWith("etcd 1.2.4");
 
-                BuildAndVerifyAction.ShouldNotThrow<Exception>();
+                await BuildAndVerifyAction.Should().NotThrowAsync<Exception>();
             }
         }
 

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
-
-using Ploeh.AutoFixture;
+using AutoFixture;
 
 namespace Draft.Tests
 {

@@ -51,7 +51,7 @@ namespace Draft.Tests.Cluster
         }
 
         [Fact]
-        public void ShouldThrowExistingPeerAddressExceptionOnDuplicatePeerAddress()
+        public async Task ShouldThrowExistingPeerAddressExceptionOnDuplicatePeerAddress()
         {
             using (var http = new HttpTest())
             {
@@ -65,7 +65,7 @@ namespace Draft.Tests.Cluster
                               .WithPeerUri(Fixtures.EtcdUrl.ToUri());
                 };
 
-                action.ShouldThrowExactly<ExistingPeerAddressException>()
+                (await action.Should().ThrowExactlyAsync<ExistingPeerAddressException>())
                       .And
                       .IsExistingPeerAddress.Should().BeTrue();
             }

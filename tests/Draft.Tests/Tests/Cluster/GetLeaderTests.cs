@@ -54,7 +54,7 @@ namespace Draft.Tests.Cluster
         }
 
         [Fact]
-        public void ShouldThrowServiceUnavailableExceptionOn503ResponseCode()
+        public async Task ShouldThrowServiceUnavailableExceptionOn503ResponseCode()
         {
             using (var http = new HttpTest())
             {
@@ -67,7 +67,7 @@ namespace Draft.Tests.Cluster
                               .GetLeader();
                 };
 
-                action.ShouldThrowExactly<ServiceUnavailableException>()
+                (await action.Should().ThrowExactlyAsync<ServiceUnavailableException>())
                       .And
                       .IsServiceUnavailable.Should().BeTrue();
             }

@@ -56,15 +56,15 @@ namespace Draft.Requests
             return this;
         }
 
-        private Task<HttpResponseMessage> CallEndpoint(bool? recursive, long? index)
+        private async Task<HttpResponseMessage> CallEndpoint(bool? recursive, long? index)
         {
-            return EndpointPool.GetEndpointUrl(PathParts)
+            return (await EndpointPool.GetEndpointUrl(PathParts)
                 .SetQueryParam(Constants.Etcd.Parameter_Wait, Constants.Etcd.Parameter_True)
                 .Conditionally(recursive.HasValue && recursive.Value, x => x.SetQueryParam(Constants.Etcd.Parameter_Recursive, Constants.Etcd.Parameter_True))
                 // ReSharper disable once PossibleInvalidOperationException
                 .Conditionally(index.HasValue, x => x.SetQueryParam(Constants.Etcd.Parameter_WaitIndex, index.Value))
                 .WithTimeout(Timeout.InfiniteTimeSpan)
-                .GetAsync();
+                .GetAsync()).ResponseMessage;
         }
 
         private async Task StartPollingAsync(IObserver<IKeyEvent> observer, CancellationToken cancellationToken, bool isSingle, bool? recursive, long? modifiedIndex)
@@ -77,7 +77,8 @@ namespace Draft.Requests
 
                     if (cancellationToken.IsCancellationRequested) { break; }
 
-                    var result = await Task.FromResult(response).ReceiveEtcdResponse<KeyEvent>(EtcdClient);
+                    IFlurlResponse flurlResponse = new FlurlResponse(response);
+                    var result = await Task.FromResult(flurlResponse).ReceiveEtcdResponse<KeyEvent>(EtcdClient);
 
                     observer.OnNext(result);
                     if (isSingle) { break; }
@@ -137,10 +138,10 @@ namespace Draft.Requests
         {
             if (e == null) { return null; }
             if (e.Call == null) { return null; }
-            if (e.Call.HttpStatus != HttpStatusCode.BadRequest) { return null; }
+            if (e.Call.HttpResponseMessage.StatusCode != HttpStatusCode.BadRequest) { return null; }
             if (e.Call.Response == null) { return null; }
 
-            return TryUpdateIndex(e.Call.Response);
+            return TryUpdateIndex(e.Call.HttpResponseMessage);
         }
 
         private static long? TryUpdateIndex(HttpResponseMessage response)
